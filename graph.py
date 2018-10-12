@@ -21,6 +21,10 @@ class Graph(ABC):
     def _create_graph(self):
         pass
 
+    @abstractmethod
+    def print_graph(self):
+        pass
+
     @classmethod
     def set_params(cls, n, X, Y, edges):
         if cls._verify_params(n, X, Y, edges):
@@ -36,16 +40,24 @@ class Graph(ABC):
         #may be implement
         return True
 
-    @abstractmethod
-    def _print_graph(cls):
-        pass
+    @classmethod
+    def get_n(cls):
+        return cls._n
+
+    @classmethod
+    def get_x(cls):
+        return cls._X
+
+    @classmethod
+    def get_y(cls):
+        return cls._Y
 
 
 class NxGraph(Graph):
 
     @overrides
     def __init__(self, **kwargs):
-        _graph_impl = nx.Graph()
+        self._graph_impl = nx.Graph()
         super().__init__(**kwargs)
 
     @overrides
@@ -77,10 +89,9 @@ class NxGraph(Graph):
         return True
 
     @overrides
-    def _print_graph(cls):
-        #todo
-        return True
-
+    def print_graph(self):
+        print(list(self._graph_impl.nodes(data=True)))
+        print(list(self._graph_impl.edges()))
 
 class Parser:
 

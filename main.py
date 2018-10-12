@@ -3,6 +3,7 @@ from task_solver import SimpleSolver
 
 graph = NxGraph()
 graph.init_from_txt("res/test1.txt")
+graph.print_graph()
 solver_kwargs = {
     "graph": graph,
 }

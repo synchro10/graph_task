@@ -23,4 +23,6 @@ class SimpleSolver(TaskSolver):
 
     @overrides
     def get_answer(self):
-        pass
+        #get list of vertices
+        n = self._graph.get_n()
+        print(n)
