@@ -2,8 +2,11 @@ from abc import ABC, abstractmethod
 from overrides import overrides
 import networkx as nx
 
-class Graph(ABC):
+from task_answer import TaskAnswer
+from test_parser import Parser
 
+
+class Graph(ABC):
     _graph_impl = None
     _n = 0
     _X = None
@@ -22,7 +25,19 @@ class Graph(ABC):
         pass
 
     @abstractmethod
-    def print_graph(self):
+    def print_graph(self, only_nodes=False):
+        pass
+
+    @abstractmethod
+    def interpretate_task_answer(self, answer: TaskAnswer) -> bool:
+        pass
+
+    @abstractmethod
+    def _check_required_statement(self) -> bool:
+        pass
+
+    @abstractmethod
+    def get_neighbours(self, vertex: int) -> list:
         pass
 
     @classmethod
@@ -37,7 +52,7 @@ class Graph(ABC):
 
     @classmethod
     def _verify_params(cls, n, X, Y, edges):
-        #may be implement
+        # may be implement
         return True
 
     @classmethod
@@ -61,7 +76,7 @@ class NxGraph(Graph):
         super().__init__(**kwargs)
 
     @overrides
-    def init_from_txt(self, filename):
+    def init_from_txt(self, filename: str):
         with open(filename, "r") as f:
             parser = Parser()
             parser.init(f)
@@ -74,67 +89,52 @@ class NxGraph(Graph):
         self._create_graph()
 
     @overrides
-    def _create_graph(self):
+    def _create_graph(self) -> bool:
         if self._n == 0 or self._edges is None:
             raise Exception("failed init graph params")
-        #create vertices
+        # create vertices
         for i in range(self._n):
             self._graph_impl.add_node(i)
-        #create edges
+        # create edges
         for edge in self._edges:
             self._graph_impl.add_edge(edge[0], edge[1])
-        #init weights
+        # init weights
         for i in range(self._n):
             self._graph_impl.node[i]["weight"] = self._X[i]
         return True
 
     @overrides
-    def print_graph(self):
+    def print_graph(self, only_nodes=False):
         print(list(self._graph_impl.nodes(data=True)))
-        print(list(self._graph_impl.edges()))
+        if not only_nodes:
+            print(list(self._graph_impl.edges()))
 
-class Parser:
+    @overrides
+    def interpretate_task_answer(self, answer: TaskAnswer) -> bool:
+        steps = answer.get_steps()
+        for i, step in enumerate(steps):
+            (source_ver, dest_ver, value) = step
+            edges = self._graph_impl.edges()
+            # check correct state
+            if self._graph_impl.node[source_ver]["weight"] < value:
+                raise Exception("less zero during interpretation on step", i)
+            elif not (source_ver, dest_ver) in edges and not (dest_ver, source_ver) in edges:
+                raise Exception("graph doesn't contain edge", source_ver, dest_ver, "on step", i)
+            elif value < 0:
+                raise Exception("negative value on step", i)
+            else:
+                self._graph_impl.node[source_ver]["weight"] -= value
+                self._graph_impl.node[dest_ver]["weight"] += value
+        return self._check_required_statement()
 
-    _file = None
-    _n = None
-    _x = None
-    _y = None
-    _edges = None
+    @overrides
+    def _check_required_statement(self) -> bool:
+        for i in range(self._n):
+            if abs(self._graph_impl.node[i]["weight"] - self._Y[i]) > 10 ** -7:
+                return False
+        return True
 
-    def init(self, file):
-        self._file = file
-        self._parse_file()
+    @overrides
+    def get_neighbours(self, vertex: int) -> list:
+        return self._graph_impl.neighbors(vertex)
 
-    #dummy implementation of parsing file
-    def _parse_file(self):
-        try:
-            lines = self._file.readlines()
-            self._n = int(lines[0])
-            self._x = self._get_float_list_from_line(lines[1])
-            self._y = self._get_float_list_from_line(lines[2])
-            self._edges = []
-            for edge_line in lines[3:]:
-                self._edges.append(self._get_edge_from_line(edge_line))
-        except:
-            raise Exception("some error in file format")
-
-    def _get_float_list_from_line(self, line):
-        return [float(i) for i in line.split()]
-
-    def _get_edge_from_line(self, line):
-        edge = [int(i) for i in line.split()]
-        if len(edge) != 2:
-            raise Exception("not 2 vertex in edge")
-        return edge
-
-    def get_n(self):
-        return self._n
-
-    def get_x(self):
-        return self._x
-
-    def get_y(self):
-        return self._y
-
-    def get_edges(self):
-        return self._edges
