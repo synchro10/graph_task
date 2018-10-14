@@ -59,7 +59,8 @@ class SimpleSolver(TaskSolver):
 
                 neighbors = self._graph.get_neighbours(vertex)
                 for neighbor in neighbors:
-                    path[neighbor] = vertex
+                    if neighbor not in visited:
+                        path[neighbor] = vertex
                     neighbor_diff = self._data[neighbor]
                     if neighbor_diff < 0:
                         # if current neighbor has more value, then it is need
