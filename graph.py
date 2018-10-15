@@ -40,6 +40,26 @@ class Graph(ABC):
     def get_neighbours(self, vertex: int) -> list:
         pass
 
+    @abstractmethod
+    def make_tree(self):
+        pass
+
+    @abstractmethod
+    def mark_vertex(self, vertex: int):
+        pass
+
+    @abstractmethod
+    def get_unmarked_leaves(self) -> list:
+        pass
+
+    @abstractmethod
+    def get_unmarked_neigbors(self, vertex: int) -> list:
+        pass
+
+    @abstractmethod
+    def is_mark(self, vertex: int) -> bool:
+        pass
+
     @classmethod
     def set_params(cls, n, X, Y, edges):
         if cls._verify_params(n, X, Y, edges):
@@ -101,6 +121,7 @@ class NxGraph(Graph):
         # init weights
         for i in range(self._n):
             self._graph_impl.node[i]["weight"] = self._X[i]
+            self._graph_impl.node[i]["mark"] = False
         return True
 
     @overrides
@@ -138,3 +159,42 @@ class NxGraph(Graph):
     def get_neighbours(self, vertex: int) -> list:
         return self._graph_impl.neighbors(vertex)
 
+    @overrides
+    def make_tree(self):
+        edges = list(self._graph_impl.edges)
+        for edge in edges:
+            self._graph_impl.remove_edge(*edge)
+            components = nx.algorithms.number_connected_components(self._graph_impl)
+            if components > 1:
+                self._graph_impl.add_edge(*edge)
+
+    @overrides
+    def mark_vertex(self, vertex: int):
+        self._graph_impl.node[vertex]["mark"] = True
+
+    @overrides
+    def get_unmarked_leaves(self) -> list:
+        unmarked_leaves = []
+        nodes = self._graph_impl.nodes()
+        for node in nodes:
+            if self._graph_impl.node[node]["mark"]:
+                continue
+            # append node if it has 0 or 1 unmarked neighbor
+            unmarked_neighbors = self.get_unmarked_neigbors(node)
+            if len(unmarked_neighbors) < 2:
+                unmarked_leaves.append(node)
+        return unmarked_leaves
+
+    @overrides
+    def get_unmarked_neigbors(self, vertex) -> list:
+        neighbors = self._graph_impl.neighbors(vertex)
+        out = []
+        count_unmark = 0
+        for neighbor in neighbors:
+            if not self._graph_impl.node[neighbor]["mark"]:
+                out.append(neighbor)
+        return out
+
+    @overrides
+    def is_mark(self, vertex: int) -> bool:
+        return self._graph_impl.node[vertex]["mark"]

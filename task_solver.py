@@ -17,6 +17,49 @@ class TaskSolver(ABC):
         pass
 
 
+class OptimalSolver(TaskSolver):
+
+    @overrides
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    @overrides
+    def get_answer(self) -> TaskAnswer:
+        # make tree from graph
+        self._graph.make_tree()
+        diffs = [x - y for x, y in zip(self._graph.get_x(), self._graph.get_y())]
+        answer = TaskAnswer()
+        negative_moves = []
+        # get unmarked leaves un while loop
+        leaves = self._graph.get_unmarked_leaves()
+        while leaves:
+            for vertex in leaves:
+                # one leaf may be mark by another leave
+                if self._graph.is_mark(vertex):
+                    continue
+                vertex_value = diffs[vertex]
+                if vertex_value != 0:
+                    neigbors = self._graph.get_unmarked_neigbors(vertex)
+                    if len(neigbors) == 1:
+                        up_vertex = self._graph.get_unmarked_neigbors(vertex)[0]
+                        diffs[vertex] = 0
+                        diffs[up_vertex] += vertex_value
+                        if vertex_value > 0:
+                            # send up over-value
+                            answer.add_step(vertex, up_vertex, vertex_value)
+                        elif vertex_value < 0:
+                            # send down less-value
+                            negative_moves.append((up_vertex, vertex, -vertex_value))
+                # mark leaf
+                self._graph.mark_vertex(vertex)
+            leaves = self._graph.get_unmarked_leaves()
+            print(leaves)
+        # append negative_moves to the answer in reverse order
+        for move in reversed(negative_moves):
+            answer.add_step(*move)
+        return answer
+
+
 class SimpleSolver(TaskSolver):
 
     _data = None
