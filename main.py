@@ -24,4 +24,5 @@ def run_single_test():
     graph.print_graph(only_nodes=False)
 
 
-run_single_test()
+if __name__ == "__main__":
+    run_single_test()
