@@ -17,9 +17,9 @@ def run_single_test():
     answer = solver.get_answer()
     answer.print()
     if graph.interpretate_task_answer(answer):
-        print(test, "Passed")
+        print(test, "PASSED")
     else:
-        print(test, "Failed")
+        print(test, "FAILED")
     print("Graph after")
     graph.print_graph(only_nodes=False)
 

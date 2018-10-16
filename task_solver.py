@@ -34,9 +34,6 @@ class OptimalSolver(TaskSolver):
         leaves = self._graph.get_unmarked_leaves()
         while leaves:
             for vertex in leaves:
-                # one leaf may be mark by another leave
-                if self._graph.is_mark(vertex):
-                    continue
                 vertex_value = diffs[vertex]
                 if vertex_value != 0:
                     neigbors = self._graph.get_unmarked_neigbors(vertex)
@@ -53,7 +50,6 @@ class OptimalSolver(TaskSolver):
                 # mark leaf
                 self._graph.mark_vertex(vertex)
             leaves = self._graph.get_unmarked_leaves()
-            print(leaves)
         # append negative_moves to the answer in reverse order
         for move in reversed(negative_moves):
             answer.add_step(*move)
